@@ -1,11 +1,3 @@
-/**
-  ******************************************************************************
-  * @file    main.c
-  * @author  Nirgal
-  * @date    03-July-2019
-  * @brief   Default main function.
-  ******************************************************************************
-*/
 #include "stm32f1xx_hal.h"
 #include "stm32f1_uart.h"
 #include "stm32f1_sys.h"
@@ -37,17 +29,16 @@ void process_ms(void)
  {
 	 TIMER_run_us(TIMER1_ID, 1000, FALSE);//PB14
 
-	 	//La matrice LED /
+	 	//La matrice LED //
 	 LED_MATRIX_init();
  }
 
- void pilotage(void){
+ void pilotage(uint8_t a){
 		typedef enum{
 			ARRET,
 			AVANT,
 			ARRIERE
 		}direction_e;
-		int i = 4;
 		direction_e dir = ARRIERE;
 
 		switch(dir){
@@ -55,60 +46,45 @@ void process_ms(void)
 			case ARRET://ON MET TOUS A ZERO
 
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,0,FALSE,TRUE);//PB14 N
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_3,0,FALSE,FALSE);//PA10
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,0,FALSE,FALSE);//PA9
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_3,0,FALSE,TRUE);//PB15 N
 
-				if(i == 1){
-					dir = AVANT;
-					break;
-				}else if(i == 2){
-					dir = ARRIERE;
-				}
+//				if(i == 1){
+//					dir = AVANT;
+//					break;
+//				}else if(i == 2){
+//					dir = ARRIERE;
+//				}
 
 				break;
 			case AVANT: //ON MET LES 2 FIN A QQCH et autres à 0
-
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,0,FALSE,TRUE);//PB14 N
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_3,0,FALSE,TRUE);//PB15 N
-
-
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_3,250,FALSE,FALSE);//PA10
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,250,FALSE,FALSE);//PA9
 
 
-				if(i == 0){
-					dir = ARRET;
-				}else if(i == 2){
-					dir = ARRIERE;
-				}
+//				if(i == 0){
+//					dir = ARRET;
+//				}else if(i == 2){
+//					dir = ARRIERE;
+//				}
 
 				break;
 
 
 			case ARRIERE: //ON MET LES 2 RIN A QQCH et autres à 0
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_3,0,FALSE,FALSE);//PA10
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,0,FALSE,FALSE);//PA9
-
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,250,FALSE,TRUE);//PB14 N
-
 				TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_3,250,FALSE,TRUE);//PB15 N
 
-				if(i == 0){
-					dir = ARRET;
-				}else if(i == 1){
-					dir = AVANT;
-				}
+//				if(i == 0){
+//					dir = ARRET;
+//				}else if(i == 1){
+//					dir = AVANT;
+//				}
 
 				break;
 		}
@@ -317,6 +293,63 @@ void process_ms(void)
  					 COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK, COLOR_BLACK
  					 };
 
+void affichePano(uint8_t c){
+	typedef enum{
+		Eteinte = 0,
+		Roulee = 1,
+		ObGauche = 2,
+		ObDroite = 3,
+		Bouchonse = 4,
+		Accidente = 5
+	}message_e;
+	message_e message = c;
+	switch(message){
+	case Eteinte:
+		LED_MATRIX_init();
+		LED_MATRIX_display(Eteint, MATRIX_SIZE);
+		break;
+	case Roulee:
+		LED_MATRIX_display(Roule, MATRIX_SIZE);
+		break;
+	case ObGauche:
+		LED_MATRIX_init();
+		LED_MATRIX_display(Gauche, MATRIX_SIZE);
+		break;
+	case ObDroite:
+		LED_MATRIX_display(Droite, MATRIX_SIZE);
+		break;
+	case Bouchonse:
+		LED_MATRIX_display(Bouchons, MATRIX_SIZE);
+		break;
+	case Accidente:
+		LED_MATRIX_display(Accident, MATRIX_SIZE);
+		break;
+
+
+	}
+}
+
+void machineAetat(uint8_t b, uint8_t c){
+	typedef enum{
+			INIT,
+			PILOTAGE,
+			AFFICHAGE
+		}etat_e;
+
+		etat_e etat = b;
+
+		switch(etat){
+			case INIT :
+				init();
+				break;
+			case PILOTAGE:
+				pilotage(c);
+				break;
+			case AFFICHAGE:
+				affichePano(c);
+				break;
+		}
+}
 int main(void)
 {
 	//Initialisation de la couche logicielle HAL (Hardware Abstraction Layer)
@@ -341,12 +374,11 @@ int main(void)
 	//On ajoute la fonction process_ms à la liste des fonctions appelées automatiquement chaque ms par la routine d'interruption du périphérique SYSTICK
 	Systick_add_callback_function(&process_ms);
 
-	TIMER_run_us(TIMER1_ID, 1000, FALSE);//PB14
+	//TIMER_run_us(TIMER1_ID, 1000, FALSE);//PB14
 
 	//La matrice LED /
 	LED_MATRIX_init();
 
-	//HC05_init();
 
 
 //	TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,250,FALSE,TRUE);//CAR N
@@ -354,49 +386,47 @@ int main(void)
 //	TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,600,FALSE,FALSE);//PA9
 //	TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_3,100,FALSE,TRUE);//CAR N
 
+	uint8_t b = 1;
+	uint8_t c = 2;
 
 
-
-	typedef enum{
-		INIT,
-		PILOTAGE,
-		AFFICHAGE
-	}etat_e;
-
-	etat_e etat = INIT;
 
 	while(1)	//boucle de tâche de fond
 	{
-//		LED_MATRIX_display_full();
-//		DEMO_MOTOR_statemachine(FALSE, UART_get_next_byte(UART2_ID));
 //
 //
+		//machineAetat(b,c);
 		//LED_MATRIX_demo();
-		switch(etat){
-			case INIT :
-				init();
-				break;
-			case PILOTAGE:
-				pilotage();
-				break;
-			case AFFICHAGE:
-				affichage();
-				break;
-		}
-		uint32_t pixels[MATRIX_SIZE];
-		uint32_t i;
+		///////////////////////////////////////////////////////////
 
-		for(i=0;i<MATRIX_SIZE;i++)
-		{
-			pixels[i] = Eteint[i];
-		}
-		LED_MATRIX_display(pixels, MATRIX_SIZE);
-		//pilotage();
 
+		/////////////////////////
+//		uint32_t pixels[MATRIX_SIZE];
+//		uint32_t i;
+
+//		for(i=0;i<MATRIX_SIZE;i++)
+//		{
+//			pixels[i] = Roule[i];
+//		}
+//		LED_MATRIX_display(pixels, MATRIX_SIZE);
+//		pilotage();
+//		TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_3,0,FALSE,FALSE);//PA10
+//		TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,0,FALSE,FALSE);//PA9
+//		TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_2,250,FALSE,TRUE);//PB14 N
+//		TIMER_enable_PWM(TIMER1_ID, TIM_CHANNEL_3,250,FALSE,TRUE);//PB15 N
+
+
+		//affichePano(1);
+
+		printf("hi");
+
+		//affichePano(2);
+		pilotage(2);
 		if(!t)
 		{
 			t=1000;
 			HAL_GPIO_TogglePin(LED_GREEN_GPIO, LED_GREEN_PIN);
+			printf("hiohihoi");
 
 		}
 
